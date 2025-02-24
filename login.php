@@ -6,19 +6,27 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST["email"]);
     $password = $_POST["password"];
 
-    $stmt = $pdo->prepare("SELECT id, password FROM users WHERE email = ?");
+    $stmt = $pdo->prepare("SELECT id, password, verified FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($user && password_verify($password, $user["password"])) {
-        $_SESSION["user_id"] = $user["id"]; // Stocker l'ID utilisateur
-        header("Location: reservation.php"); // Rediriger vers la page de réservation
-        exit;
+    // Vérifie si l'utilisateur existe et s'il est vérifié
+    if ($user) {
+        if ($user["verified"] == 0) {
+            $error_message = "Votre compte n'est pas encore vérifié. Veuillez vérifier votre e-mail.";
+        } elseif (password_verify($password, $user["password"])) {
+            $_SESSION["user_id"] = $user["id"]; // Stocker l'ID utilisateur
+            header("Location: reservation.php"); // Rediriger vers la page de réservation
+            exit;
+        } else {
+            $error_message = "Identifiants incorrects.";
+        }
     } else {
         $error_message = "Identifiants incorrects.";
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="fr">

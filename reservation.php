@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-include "header.php"; // Inclusion du header
+include 'includes/header.php'; 
 ?>
 
 <!-- Contenu spécifique à la page -->
@@ -96,4 +96,4 @@ include "header.php"; // Inclusion du header
     <button type="submit" class="btn btn-primary">Réserver</button>
 </form>
 
-<?php include "footer.php"; // Inclusion du footer ?>
+<?php include 'includes/footer.php'; ?>

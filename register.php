@@ -1,28 +1,63 @@
 <?php
 session_start();
 require "config.php"; // Connexion à la base de données
+require 'vendor/autoload.php';
 
-$message = ""; // Message de confirmation ou d'erreur
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+$message = ""; 
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nom = trim($_POST["nom"]);
     $prenom = trim($_POST["prenom"]);
     $email = filter_var($_POST["email"], FILTER_SANITIZE_EMAIL);
-    $password = password_hash($_POST["password"], PASSWORD_DEFAULT); // Hachage du mot de passe
+    $date_naissance = $_POST["date_naissance"];
+    $adresse_postale = trim($_POST["adresse_postale"]);
+    $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
+    $token = bin2hex(random_bytes(32)); // Génération d'un token unique
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $message = "<div class='alert alert-danger text-center'>Email invalide.</div>";
     } else {
         try {
-            $stmt = $pdo->prepare("INSERT INTO users (nom, prenom, email, password) VALUES (?, ?, ?, ?)");
-            $stmt->execute([$nom, $prenom, $email, $password]);
-            $message = "<div class='alert alert-success text-center'>Inscription réussie. <a href='login.php'>Connectez-vous</a></div>";
+            $stmt = $pdo->prepare("INSERT INTO users (nom, prenom, email, date_naissance, adresse_postale, password, token) 
+                                   VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$nom, $prenom, $email, $date_naissance, $adresse_postale, $password, $token]);
+
+            // Envoi de l'e-mail de vérification
+            $mail = new PHPMailer(true);
+            try {
+                $mail->isSMTP();
+                $mail->Host = SMTP_HOST;
+                $mail->SMTPAuth = true;
+                $mail->Username = SMTP_USER;
+                $mail->Password = SMTP_PASS;
+                $mail->SMTPSecure = "tls";
+                $mail->Port = SMTP_PORT;
+
+                $mail->setFrom(SMTP_FROM, "Grec d'Or");
+                $mail->addAddress($email);
+
+                $mail->isHTML(true);
+                $mail->Subject = "Vérification de votre compte";
+                $mail->Body = "Bonjour $prenom,<br><br>
+                               Merci de vous être inscrit ! Cliquez sur le lien ci-dessous pour vérifier votre compte :<br>
+                               <a href='http://localhost/TP-03-SYS-RESERV-CAL/verify.php?token=$token'>Vérifier mon compte</a><br><br>
+                               Si vous n'avez pas fait cette demande, ignorez cet e-mail.";
+
+                $mail->send();
+                $message = "<div class='alert alert-success text-center'>Inscription réussie ! Vérifiez votre e-mail.</div>";
+            } catch (Exception $e) {
+                $message = "<div class='alert alert-danger text-center'>Erreur d'envoi d'e-mail : {$mail->ErrorInfo}</div>";
+            }
         } catch (PDOException $e) {
             $message = "<div class='alert alert-danger text-center'>Erreur : " . $e->getMessage() . "</div>";
         }
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -60,6 +95,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="mb-3">
                             <label for="email" class="form-label text-dark">E-mail</label>
                             <input type="email" name="email" id="email" class="form-control bg-white text-dark" placeholder="Votre e-mail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date_naissance" class="form-label text-dark">Date de naissance</label>
+                            <input type="date" name="date_naissance" id="date_naissance" class="form-control bg-white text-dark" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="adresse_postale" class="form-label text-dark">Adresse postale</label>
+                            <input type="text" name="adresse_postale" id="adresse_postale" class="form-control bg-white text-dark" placeholder="Votre adresse" required>
                         </div>
                         <div class="mb-3">
                             <label for="password" class="form-label text-dark">Mot de passe</label>
