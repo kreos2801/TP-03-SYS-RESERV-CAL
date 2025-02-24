@@ -15,7 +15,7 @@ session_start();
 </head>
 <body>
 
-<?php include 'includes/navbar.php'; ?>
+<?php include 'includes/header.php'; ?>
 
 <!-- Contenu principal du site -->
 <main class="container my-5">
