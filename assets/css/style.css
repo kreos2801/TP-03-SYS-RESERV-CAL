@@ -178,4 +178,16 @@ input, textarea, select {
 
 footer .social-icons i {
     color: #D4AF37; 
-  }
+}
+
+.selected-date {
+    background-color: #5bc0de !important; /* Bleu clair */
+    color: white !important;
+    border-radius: 5px !important;
+    border: 2px solid #0275d8 !important; /* Bordure bleue */
+}
+
+#selectedDate {
+    font-size: 30px; 
+    margin-top: 10px; 
+}
