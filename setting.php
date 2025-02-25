@@ -16,6 +16,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = isset($_POST["email"]) ? filter_var($_POST["email"], FILTER_SANITIZE_EMAIL) : $user['email'];
     $date_naissance = isset($_POST["date_naissance"]) ? $_POST["date_naissance"] : $user['date_naissance'];
     $adresse_postale = isset($_POST["adresse_postale"]) ? trim($_POST["adresse_postale"]) : $user['adresse_postale'];
+    $telephone = isset($_POST["telephone"]) ? trim($_POST["telephone"]) : $user['telephone'];
     $password = isset($_POST["password"]) && !empty($_POST["password"]) ? password_hash($_POST["password"], PASSWORD_DEFAULT) : $user['password'];
 
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -31,8 +32,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         } else {
             try {
                 // Mise à jour des informations utilisateur
-                $stmt = $pdo->prepare("UPDATE users SET nom = ?, prenom = ?, email = ?, date_naissance = ?, adresse_postale = ?, password = ? WHERE id = ?");
-                $stmt->execute([$nom, $prenom, $email, $date_naissance, $adresse_postale, $password, $user_id]);
+                $stmt = $pdo->prepare("UPDATE users SET nom = ?, prenom = ?, email = ?, date_naissance = ?, adresse_postale = ?, telephone = ?, password = ? WHERE id = ?");
+                $stmt->execute([$nom, $prenom, $email, $date_naissance, $adresse_postale, $telephone, $password, $user_id]);
 
                 $message = "<div class='alert alert-success text-center'>Informations mises à jour avec succès.</div>";
             } catch (PDOException $e) {
@@ -65,6 +66,7 @@ if (isset($_POST['delete_account'])) {
 }
 
 ?>
+
 
 
 <!DOCTYPE html>
@@ -103,6 +105,10 @@ if (isset($_POST['delete_account'])) {
                         <div class="mb-3">
                             <label for="email" class="form-label text-dark">E-mail</label>
                             <input type="email" name="email" id="email" class="form-control bg-white text-dark" value="<?= htmlspecialchars($user['email']) ?>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="telephone" class="form-label text-dark">Numéro de téléphone</label>
+                            <input type="tel" name="telephone" id="telephone" class="form-control bg-white text-dark" value="<?= htmlspecialchars($user['telephone']) ?>" required>
                         </div>
                         <div class="mb-3">
                             <label for="date_naissance" class="form-label text-dark">Date de naissance</label>

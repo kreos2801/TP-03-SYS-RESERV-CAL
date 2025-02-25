@@ -14,6 +14,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = filter_var($_POST["email"], FILTER_SANITIZE_EMAIL);
     $date_naissance = $_POST["date_naissance"];
     $adresse_postale = trim($_POST["adresse_postale"]);
+    $telephone = trim($_POST["telephone"]);
     $password = password_hash($_POST["password"], PASSWORD_DEFAULT);
     $token = bin2hex(random_bytes(32)); // Génération d'un token unique
 
@@ -21,9 +22,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $message = "<div class='alert alert-danger text-center'>Email invalide.</div>";
     } else {
         try {
-            $stmt = $pdo->prepare("INSERT INTO users (nom, prenom, email, date_naissance, adresse_postale, password, token) 
-                                   VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$nom, $prenom, $email, $date_naissance, $adresse_postale, $password, $token]);
+            $stmt = $pdo->prepare("INSERT INTO users (nom, prenom, email, date_naissance, adresse_postale, password, token, telephone) 
+                                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$nom, $prenom, $email, $date_naissance, $adresse_postale, $password, $token, $telephone]);
 
             // Envoi de l'e-mail de vérification
             $mail = new PHPMailer(true);
@@ -57,6 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
+
 
 
 <!DOCTYPE html>
@@ -95,6 +97,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="mb-3">
                             <label for="email" class="form-label text-dark">E-mail</label>
                             <input type="email" name="email" id="email" class="form-control bg-white text-dark" placeholder="Votre e-mail" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="telephone" class="form-label text-dark">Numéro de téléphone</label>
+                            <input type="tel" name="telephone" id="telephone" class="form-control bg-white text-dark" placeholder="Votre numéro de téléphone" required>
                         </div>
                         <div class="mb-3">
                             <label for="date_naissance" class="form-label text-dark">Date de naissance</label>
