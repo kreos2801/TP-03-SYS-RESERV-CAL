@@ -34,6 +34,9 @@ if (session_status() == PHP_SESSION_NONE) {
                         <li class="nav-item">
                             <a class="nav-link btn btn-danger text-white ms-3" href="logout.php">Déconnexion</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="setting.php">Paramètre</a>
+                        </li>
                     <?php else: ?>
                         <li class="nav-item">
                             <a class="nav-link btn btn-success text-white ms-3" href="login.php">Connexion</a>
