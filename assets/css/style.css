@@ -191,3 +191,20 @@ footer .social-icons i {
     font-size: 30px; 
     margin-top: 10px; 
 }
+
+table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+td {
+    text-align: center;
+    vertical-align: top;
+    height: 100px;
+    padding: 5px;
+}
+
+.day {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
