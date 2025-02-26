@@ -208,3 +208,17 @@ td {
     font-weight: bold;
     margin-bottom: 5px;
 }
+
+/* Message d'erreur en rouge */
+.alert-danger {
+    color: red;
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+/* Boutons désactivés (créneaux réservés) */
+.btn-secondary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    pointer-events: none; /* Désactive le clic */
+}

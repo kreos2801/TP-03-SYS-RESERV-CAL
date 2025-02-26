@@ -10,28 +10,60 @@ if (!isset($_SESSION["user_id"])) {
 
 $user_id = $_SESSION["user_id"];
 
-// Récupération des infos utilisateur
-$stmt = $pdo->prepare("SELECT nom, prenom, email, telephone FROM users WHERE id = ?");
-$stmt->execute([$user_id]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$user) {
-    echo "Utilisateur non trouvé.";
-    exit;
-}
-
-// Gestion du mois et de l'année
+// Initialisation des variables $currentMonth et $currentYear
 $currentMonth = isset($_GET['month']) ? (int)$_GET['month'] : date('m');
 $currentYear = isset($_GET['year']) ? (int)$_GET['year'] : date('Y');
 
-if ($currentMonth < 1) {
-    $currentMonth = 12;
-    $currentYear--;
-} elseif ($currentMonth > 12) {
-    $currentMonth = 1;
-    $currentYear++;
+// Traitement du formulaire de réservation
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    // Vérifie si la date et l'heure ont été envoyées via le formulaire
+    if (isset($_POST['date']) && isset($_POST['heure'])) {
+        $date = $_POST['date'];
+        $heure = $_POST['heure'];
+        
+        // Récupération de l'ID utilisateur depuis la session
+        $user_id = $_SESSION['user_id'];
+
+        // Préparation de la requête pour récupérer les informations utilisateur
+        $stmt = $pdo->prepare("SELECT nom, prenom, email, telephone FROM users WHERE id = ?");
+        $stmt->execute([$user_id]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            echo "Utilisateur non trouvé.";
+            exit;
+        }
+
+        // Vérification si le créneau est déjà réservé
+        $stmt = $pdo->prepare("SELECT COUNT(*) FROM reservations WHERE date_reservation = ? AND heure = ?");
+        $stmt->execute([$date, $heure]);
+        if ($stmt->fetchColumn() > 0) {
+            $message = "Le créneau du $date à $heure est déjà réservé.";
+            $messageClass = 'alert-danger'; // Classe CSS pour message d'erreur rouge
+        } else {
+            // Insérer la réservation dans la base de données
+            $stmt = $pdo->prepare("INSERT INTO reservations (user_id, nom, prenom, email, telephone, date_reservation, heure) 
+                                   VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$user_id, $user['nom'], $user['prenom'], $user['email'], $user['telephone'], $date, $heure]);
+            $message = "Réservation confirmée pour le $date à $heure.";
+            $messageClass = 'alert-success'; // Classe CSS pour message de succès
+        }
+    }
 }
 
+// Récupération des créneaux réservés pour le mois et l'année en cours
+$stmt = $pdo->prepare("SELECT date_reservation, heure FROM reservations WHERE MONTH(date_reservation) = ? AND YEAR(date_reservation) = ?");
+$stmt->execute([$currentMonth, $currentYear]);
+$reservedSlots = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Tableau pour marquer les créneaux réservés
+$reserved = [];
+foreach ($reservedSlots as $slot) {
+    $reserved["{$slot['date_reservation']} {$slot['heure']}"] = true;
+}
+//print_r($reserved);
+
+// Gestion du mois et de l'année
 $daysInMonth = date('t', strtotime("$currentYear-$currentMonth-01"));
 $startDay = (date('N', strtotime("$currentYear-$currentMonth-01")) % 7);
 
@@ -67,7 +99,7 @@ include 'includes/header.php';
 <h2 class="text-center">Réservez votre créneau</h2>
 
 <?php if (!empty($message)): ?>
-    <div id="successMessage" class="alert alert-success text-center">
+    <div id="successMessage" class="alert <?php echo $messageClass; ?> text-center">
         <?php echo $message; ?>
     </div>
 <?php endif; ?>
@@ -116,11 +148,31 @@ include 'includes/header.php';
                 } else {
                     echo "<div class='row'><div class='col'><h6>Matin</h6>";
                     foreach (array_slice($availableSlots, 0, 4) as $heure => $label) {
-                        echo "<button class='btn btn-primary btn-sm slot' data-date='$currentDate' data-heure='$heure'>$label</button>";
+                        // Vérifier si le créneau est réservé ou passé
+                        $slotKey = "$currentDate $heure";
+                        $isReserved = isset($reserved[$slotKey.":00"]);
+                        $isPastSlot = (strtotime($currentDate . ' ' . $heure) < strtotime("now"));
+
+                        if ($isReserved || $isPastSlot) {
+                            echo "<button class='btn btn-secondary btn-sm' disabled>Réservé</button>";
+                        } else {
+                            echo "<button class='btn btn-primary btn-sm slot' data-date='$currentDate' data-heure='$heure'>$label</button>";
+                        }
                     }
                     echo "</div><div class='col'><h6>Après-midi</h6>";
                     foreach (array_slice($availableSlots, 4, 4) as $heure => $label) {
-                        echo "<button class='btn btn-primary btn-sm slot' data-date='$currentDate' data-heure='$heure'>$label</button>";
+                        // Vérifier si le créneau est réservé ou passé
+                        $slotKey = "$currentDate $heure";
+                        $isReserved = isset($reserved[$slotKey.":00"]);
+                    
+                        
+                        $isPastSlot = (strtotime($currentDate . ' ' . $heure) < strtotime("now"));
+
+                        if ($isReserved || $isPastSlot) {
+                            echo "<button class='btn btn-secondary btn-sm' disabled>Réservé</button>";
+                        } else {
+                            echo "<button class='btn btn-primary btn-sm slot' data-date='$currentDate' data-heure='$heure'>$label</button>";
+                        }
                     }
                     echo "</div></div>";
                 }
@@ -147,11 +199,19 @@ include 'includes/header.php';
     <button type="submit" class="btn btn-success">Confirmer la réservation</button>
 </form>
 
+<?php include 'includes/footer.php'; ?>
+
 <script>
     $(document).ready(function() {
         $('.slot').on('click', function() {
             let date = $(this).data('date');
             let heure = $(this).data('heure');
+
+            // Vérification si le créneau est déjà réservé
+            if ($(this).hasClass('btn-secondary')) {
+                alert('Ce créneau est déjà réservé ou passé.');
+                return;
+            }
 
             $('#reservationDate').val(date);
             $('#reservationHeure').val(heure);
@@ -167,5 +227,3 @@ include 'includes/header.php';
         }
     });
 </script>
-
-<?php include 'includes/footer.php'; ?>
