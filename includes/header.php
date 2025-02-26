@@ -36,10 +36,10 @@ if (session_status() == PHP_SESSION_NONE) {
                             <a class="nav-link btn btn-danger text-white ms-3" href="logout.php">Déconnexion</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="setting.php">Paramètre</a>
+                            <a class="nav-link active" href="mes_reservations.php">RDV</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link active" href="mes_reservations.php">Paramètre</a>
+                            <a class="nav-link active" href="setting.php">Paramètre</a>
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
