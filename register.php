@@ -6,9 +6,19 @@ require 'vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-$message = ""; 
+$message = "";
+
+// Génération du token CSRF s'il n'existe pas déjà
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Vérification du token CSRF
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die("Token CSRF invalide.");
+    }
+
     $nom = trim($_POST["nom"]);
     $prenom = trim($_POST["prenom"]);
     $email = filter_var($_POST["email"], FILTER_SANITIZE_EMAIL);
@@ -59,8 +69,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 ?>
 
-
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -72,20 +80,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link rel="stylesheet" href="assets/css/style.css">
     <title>Inscription</title>
 </head>
-<body class="bg-light"> <!-- Fond clair -->
+<body class="bg-light">
 
 <?php include 'includes/header.php'; ?>
 
 <main class="container my-5">
     <section class="row justify-content-center">
         <div class="col-md-6">
-            <div class="card shadow-lg bg-white"> <!-- Fond blanc -->
+            <div class="card shadow-lg bg-white">
                 <div class="card-body">
                     <h2 class="text-center mb-4 text-dark">Inscription</h2> 
 
-                    <?php echo $message; ?> <!-- Affichage des messages -->
+                    <?php echo $message; ?> 
 
                     <form method="POST">
+                        <!-- Token CSRF -->
+                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+
                         <div class="mb-3">
                             <label for="nom" class="form-label text-dark">Nom</label>
                             <input type="text" name="nom" id="nom" class="form-control bg-white text-dark" placeholder="Votre nom" required>

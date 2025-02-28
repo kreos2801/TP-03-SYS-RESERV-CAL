@@ -2,7 +2,17 @@
 session_start();
 require "config.php"; 
 
+// Génération du token CSRF s'il n'existe pas déjà
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Vérification du token CSRF
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die("Token CSRF invalide.");
+    }
+
     $email = trim($_POST["email"]);
     $password = $_POST["password"];
 
@@ -26,7 +36,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="fr">
@@ -55,6 +64,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <?php endif; ?>
 
                     <form method="POST">
+                        <!-- Token CSRF -->
+                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+
                         <div class="mb-3">
                             <label for="email" class="form-label text-dark">E-mail</label>
                             <input type="email" name="email" id="email" class="form-control bg-white text-dark" placeholder="Votre e-mail" required>
